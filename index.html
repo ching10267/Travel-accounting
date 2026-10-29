@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="theme-color" content="#F1ECE0">
+<link rel="icon" type="image/jpeg" href="./favicon.jpg">
+<link rel="apple-touch-icon" href="./favicon.jpg">
+<title>旅記</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&amp;display=swap">
+<style>
+body{margin:0;background:#E3DCCB;font-family:'Noto Sans TC',system-ui,sans-serif;color:#11120D}
+*{font-style:normal;box-sizing:border-box}
+button{font:inherit;color:inherit;cursor:pointer;border:0;background:none;padding:0}
+textarea{font:inherit;color:inherit;display:block;box-sizing:border-box;width:100%;min-width:0;max-width:100%;min-height:88px;border:1px solid #D8CFBC;border-radius:14px;background:#FFFBF4;padding:10px 12px;line-height:1.5;resize:vertical}
+input,select{font:inherit;color:inherit;width:100%;min-width:0;max-width:100%;min-height:44px;border:1px solid #D8CFBC;border-radius:14px;background:#FFFBF4;padding:0 12px}
+.card{background:#FFFBF4;border-radius:24px;padding:18px;border:1px solid #E4DCCD}
+.ico{width:22px;height:22px;fill:none;stroke:currentColor;stroke-width:1.8;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.pill{min-height:44px;padding:0 16px;border-radius:999px;background:#E8E1D2;font-weight:500;display:inline-flex;align-items:center;justify-content:center;gap:6px}
+.pill.on{background:#565449;color:#FFFBF4}
+.btn{min-height:48px;border-radius:16px;background:#565449;color:#FFFBF4;font-weight:700;padding:0 20px;display:inline-flex;align-items:center;justify-content:center;gap:8px}
+.lab{font-size:13px;color:#565449;margin:14px 0 6px;font-weight:500}
+.key{min-height:48px;border-radius:14px;background:#ECE5D8;font-size:20px;font-weight:500}
+.key.op{background:#D8CFBC}
+.key.eq{background:#565449;color:#FFFBF4}
+.row{display:flex;align-items:center;gap:12px}
+.sub{font-size:12px;color:#565449}
+.nav{position:fixed;left:0;right:0;bottom:0;max-width:480px;margin:0 auto;z-index:6;display:flex;background:#FFFBF4;border-top:1px solid #E4DCCD;padding:6px 8px 10px}
+.nav button{flex:1;min-height:48px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;font-size:12px;color:#565449}
+.seg{flex:1;min-height:44px;border-radius:999px;font-weight:500;color:#565449}
+.seg.on{background:#FFFBF4;color:#11120D;font-weight:700;box-shadow:0 2px 6px rgba(17,18,13,.15)}
+.dtrow{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:12px}
+@media (max-width:340px){.dtrow{grid-template-columns:minmax(0,1fr)}}
+input[type=date],input[type=time]{-webkit-appearance:none;appearance:none;display:block;box-sizing:border-box;width:100%;min-width:0;max-width:100%;line-height:44px;text-align:center;text-align-last:center}
+input[type=date]::-webkit-date-and-time-value,input[type=time]::-webkit-date-and-time-value{text-align:center;margin:0 auto;min-width:0}
+input[type=date]::-webkit-datetime-edit,input[type=time]::-webkit-datetime-edit{padding:0}
+.nav button.on{color:#11120D;font-weight:700}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script type="text/html" id="tpl">
+<div style="max-width:480px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;background:#F1ECE0;position:relative">
+<div style="flex:1;padding:20px 16px 96px;display:flex;flex-direction:column;gap:14px">
+
+<template data-sc="if" value="{{isHome}}" hint-placeholder-val="{{true}}">
+<div class="row" style="justify-content:space-between"><h1 style="margin:0;font-size:24px">旅遊記帳</h1><div class="sub">TWD 1 ≈ KRW {{rate100}}</div></div>
+<div class="card" style="background:#11120D;color:#FFFBF4;border:0;position:relative">
+<button onClick="{{toggleBR}}" aria-label="編輯預算與匯率" style="position:absolute;top:8px;right:8px;width:44px;height:44px;color:#FFFBF4;display:flex;align-items:center;justify-content:center"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13 7l4 4"/></svg></button>
+<div style="font-size:13px;opacity:.9">總花費（韓幣）</div>
+<div style="font-size:38px;font-weight:700;margin:4px 0">₩ {{totalKrw}}</div>
+<div style="font-size:14px;opacity:.9">≈ NT$ {{totalTwd}}</div>
+<div class="row" style="justify-content:space-between;margin:16px 0 8px;font-size:13px"><span>餘額 ₩ {{walletLeftKrw}} ・ 預算 ₩ {{budgetTxt}}</span><span>已使用 {{pct}}%</span></div>
+<div style="height:12px;border-radius:999px;background:rgba(255,251,244,.3);overflow:hidden"><div style="height:100%;border-radius:999px;background:#FFFBF4;width:{{barW}}"></div></div>
+<template data-sc="if" value="{{editBR}}" hint-placeholder-val="{{false}}"><div style="margin-top:16px;padding-top:12px;border-top:1px solid rgba(255,251,244,.3)"><div class="row"><label for="rt" style="flex:1;font-size:13px">匯率 1 TWD = KRW</label><input id="rt" type="number" step="0.01" value="{{rate}}" onChange="{{setRate}}" style="width:110px;color:#11120D"></div>
+<div class="row" style="margin-top:8px"><label for="bd" style="flex:1;font-size:13px">預算（KRW）</label><input id="bd" type="number" value="{{budget}}" onChange="{{setBudget}}" style="width:110px;color:#11120D"></div>
+<button class="pill" style="margin-top:12px;width:100%;color:#11120D" onClick="{{toggleBR}}">完成</button></div></template>
+</div>
+<div style="font-weight:700;margin-top:4px">最近記錄</div>
+<div class="row" style="overflow-x:auto;gap:8px"><template data-sc="for" list="{{dates}}" as="d" hint-placeholder-count="3"><button class="pill {{d.on}}" style="flex:none;white-space:nowrap" onClick="{{d.go}}">{{d.t}}</button></template></div>
+<template data-sc="if" value="{{noExp}}" hint-placeholder-val="{{false}}"><div class="card sub" style="text-align:center">還沒有記錄，按右下角「＋」開始記帳</div></template>
+<template data-sc="for" list="{{exps}}" as="e" hint-placeholder-count="2">
+<div><template data-sc="if" value="{{e.head}}" hint-placeholder-val="{{false}}"><div style="font-weight:700;margin:6px 0 10px">{{e.headTxt}}</div></template>
+<div style="position:relative;overflow:hidden;border-radius:24px;border:1px solid #E4DCCD">
+<div style="position:absolute;right:0;top:0;bottom:0;display:flex;width:132px;visibility:{{e.vis}}"><button onClick="{{e.edit}}" style="flex:1;background:#565449;color:#FFFBF4;font-weight:500">編輯</button><button onClick="{{e.del}}" style="flex:1;background:#11120D;color:#FFFBF4;font-weight:500">刪除</button></div>
+<div class="row" style="position:relative;background:#FFFBF4;touch-action:pan-y;padding:10px 4px 10px 12px;transition:transform .2s;transform:{{e.tx}}" onPointerDown="{{e.down}}" onPointerUp="{{e.up}}">
+<button class="row" style="flex:1;min-width:0;text-align:left;min-height:48px;align-items:flex-start;flex-wrap:wrap;row-gap:0" onClick="{{e.edit}}" aria-label="編輯 {{e.name}}">
+<span style="width:42px;height:42px;border-radius:50%;background:#E8E1D2;display:flex;align-items:center;justify-content:center;color:#565449"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{e.d}}"></path></svg></span>
+<span style="flex:1;min-width:0"><div style="font-weight:700">{{e.name}}</div><div class="sub">{{e.sub}}</div></span>
+<span style="text-align:right;flex:none"><div class="sub" style="line-height:1.5">{{e.dateTxt}}</div><div style="font-weight:700;color:{{e.color}}">{{e.amtTxt}}</div></span><template data-sc="if" value="{{e.hasNote}}" hint-placeholder-val="{{false}}"><div style="flex:0 0 calc(100% - 54px);box-sizing:border-box;margin:6px 0 0 54px;background:#E8E1D2;border-radius:12px;padding:6px 10px;font-size:12px;line-height:1.5;color:#565449;white-space:pre-wrap;overflow-wrap:anywhere;word-break:break-word">{{e.note}}</div></template></button>
+<button onClick="{{e.toggle}}" aria-label="顯示編輯與刪除" style="width:36px;height:44px;flex:none"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01"></path></svg></button>
+</div>
+</div></div>
+</template>
+</template>
+
+<template data-sc="if" value="{{isWallet}}" hint-placeholder-val="{{false}}">
+<h1 style="margin:0;font-size:24px">公費錢包</h1>
+<div class="row" style="zoom:.72;background:#E8E1D2;border-radius:999px;padding:5px;gap:0"><template data-sc="for" list="{{wTabs}}" as="t" hint-placeholder-count="3"><button class="seg {{t.on}}" onClick="{{t.go}}">{{t.t}}</button></template></div>
+<template data-sc="if" value="{{wOv}}" hint-placeholder-val="{{true}}">
+<div style="zoom:.72;display:flex;flex-direction:column;gap:14px">
+<div class="card" style="padding:18px 18px 26px"><div class="row" style="justify-content:space-between"><span class="sub" style="font-size:15px">錢包餘額</span><div class="row" style="background:#E8E1D2;border-radius:999px;padding:4px;gap:0"><template data-sc="for" list="{{wCurs}}" as="c" hint-placeholder-count="2"><button class="seg {{c.on}}" style="min-height:36px;padding:0 14px;flex:none;font-size:14px" onClick="{{c.go}}">{{c.t}}</button></template></div></div>
+<div style="text-align:center;font-size:40px;font-weight:700;margin-top:22px;word-break:break-all">{{wsBal}}</div></div>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+<div class="card" style="padding:16px"><div class="sub" style="font-size:14px">已入金</div><div style="font-size:22px;font-weight:700;color:#4E8EA2;margin-top:6px;word-break:break-all">{{wsDep}}</div></div>
+<div class="card" style="padding:16px"><div class="sub" style="font-size:14px">已支出</div><div style="font-size:22px;font-weight:700;color:#11120D;margin-top:6px;word-break:break-all">{{wsSp}}</div></div></div>
+<div style="display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px">
+<button class="btn" style="border-radius:999px;min-height:56px" onClick="{{goDeposit}}">入金</button>
+<button class="btn" style="border-radius:999px;min-height:56px;background:#FFFBF4;color:#11120D;border:1px solid #D8CFBC" onClick="{{goMem}}">新增成員</button></div>
+<div class="row" style="justify-content:space-between;margin-top:4px"><div style="font-weight:700;font-size:18px">最近紀錄</div><button onClick="{{goRec}}" style="min-height:44px;padding:0 4px;color:#565449">查看 ›</button></div>
+</div>
+<template data-sc="if" value="{{noRecent}}" hint-placeholder-val="{{false}}"><div class="card sub" style="text-align:center">還沒有入金或公費支出記錄</div></template>
+<template data-sc="for" list="{{wRecent}}" as="r" hint-placeholder-count="3"><div class="card row" style="padding:14px 16px;gap:14px"><span style="width:48px;height:48px;border-radius:50%;background:{{r.bg}};color:{{r.fg}};display:flex;align-items:center;justify-content:center;font-weight:700;font-size:18px;flex:none"><template data-sc="if" value="{{r.isDep}}" hint-placeholder-val="{{true}}"><span>{{r.ch}}</span></template><template data-sc="if" value="{{r.isExp}}" hint-placeholder-val="{{false}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{r.d}}"/></svg></template></span><span style="flex:1;min-width:0"><div style="font-weight:700">{{r.title}}</div><div class="sub">{{r.sub}}</div></span><span style="font-weight:700;color:{{r.color}};text-align:right">{{r.amt}}</span></div></template>
+<div class="card"><div style="font-weight:700">支付方式餘額</div>
+<template data-sc="for" list="{{wpay}}" as="w" hint-placeholder-count="2"><div style="margin-top:14px"><div class="row" style="justify-content:space-between"><span style="font-weight:500">{{w.name}}</span><span class="sub">已使用 {{w.pct}}</span></div>
+<div style="font-size:24px;font-weight:700;margin-top:2px">{{w.big}}</div>
+<div style="height:10px;border-radius:999px;background:#E8E1D2;overflow:hidden;margin:8px 0 6px"><div style="height:100%;border-radius:999px;background:#565449;width:{{w.barW}}"></div></div>
+<div class="sub">入金 {{w.dep}} ・ 花費 {{w.sp}}</div></div></template></div>
+</template>
+<template data-sc="if" value="{{wMem}}" hint-placeholder-val="{{false}}">
+<div class="card" style="overflow:hidden"><div style="font-weight:700">成員</div>
+<div class="sub" style="margin-bottom:4px">向左滑動可編輯或刪除</div>
+<template data-sc="for" list="{{members}}" as="m" hint-placeholder-count="2">
+<div style="position:relative;overflow:hidden;border-top:1px solid #E4DCCD;margin:0 -18px">
+<div style="position:absolute;right:0;top:0;bottom:0;display:flex;width:132px;visibility:{{m.vis}}"><button onClick="{{m.edit}}" style="flex:1;background:#565449;color:#FFFBF4;font-weight:500">編輯</button><button onClick="{{m.del}}" style="flex:1;background:#11120D;color:#FFFBF4;font-weight:500">刪除</button></div>
+<div class="row" style="position:relative;background:#FFFBF4;touch-action:pan-y;min-height:56px;padding:0 8px 0 18px;transition:transform .2s;transform:{{m.tx}}" onPointerDown="{{m.down}}" onPointerUp="{{m.up}}"><span style="flex:1;min-width:0"><div style="font-weight:700">{{m.name}}</div><div class="sub">已入金 NT$ {{m.dep}}</div></span><button onClick="{{m.toggle}}" aria-label="顯示編輯與刪除" style="width:44px;height:44px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01"/></svg></button></div>
+</div></template>
+<div class="row" style="margin-top:8px"><input aria-label="新成員名稱" placeholder="新增成員名稱" value="{{newMember}}" onChange="{{setNewMember}}"><button class="btn" onClick="{{addMember}}" style="font-size: 14px; flex-direction: row; width: 80px">{{mBtn}}</button></div><template data-sc="if" value="{{mEditing}}" hint-placeholder-val="{{false}}"><button class="pill" style="margin-top:10px" onClick="{{cancelMember}}">取消編輯</button></template></div>
+</template>
+<template data-sc="if" value="{{wRec}}" hint-placeholder-val="{{false}}">
+<div class="card" style="padding-bottom:8px;overflow:hidden"><div class="row" style="justify-content:space-between"><div style="font-weight:700">{{depTitle}}</div><button onClick="{{toggleDep}}" aria-label="{{depToggleLabel}}" style="width:40px;height:40px;margin:-4px 0;border-radius:50%;background:#565449;color:#FFFBF4;display:flex;align-items:center;justify-content:center"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{depIcon}}"></path></svg></button></div>
+<template data-sc="if" value="{{depOpen}}" hint-placeholder-val="{{false}}"><div>
+<div class="lab">成員</div><select aria-label="入金成員" value="{{dM}}" onChange="{{setDM}}"><template data-sc="for" list="{{members}}" as="m" hint-placeholder-count="2"><option value="{{m.id}}">{{m.name}}</option></template></select>
+<div class="lab">日期</div><input type="date" aria-label="入金日期" value="{{dDate}}" onChange="{{setDDate}}">
+<div class="lab">幣別</div><div class="row" style="flex-wrap:wrap"><template data-sc="for" list="{{dCurs}}" as="c" hint-placeholder-count="4"><button class="pill {{c.on}}" style="min-height:35px;padding:0 13px;font-size:13px" onClick="{{c.go}}">{{c.t}}</button></template></div>
+<div class="lab">入金方式</div><div class="row" style="flex-wrap:wrap"><template data-sc="for" list="{{dWays}}" as="w" hint-placeholder-count="2"><button class="pill {{w.on}}" style="min-height:35px;padding:0 13px;font-size:13px" onClick="{{w.go}}">{{w.t}}</button></template></div>
+<div class="lab">金額（{{dCur}}）</div><div class="row"><input type="number" aria-label="入金金額" placeholder="0" value="{{dA}}" onChange="{{setDA}}"><button class="btn" onClick="{{addDep}}" style="width: 80px; border-radius: 16px; font-size: 14px">{{depBtn}}</button></div>
+<template data-sc="if" value="{{dEditing}}" hint-placeholder-val="{{false}}"><button class="pill" style="margin-top:10px" onClick="{{cancelDep}}">取消編輯</button></template></div></template>
+<div class="sub" style="margin:10px 0 6px">向左滑動可編輯或刪除</div>
+<template data-sc="if" value="{{noDeps}}" hint-placeholder-val="{{false}}"><div class="sub" style="padding:10px 0">尚無入金記錄</div></template>
+<template data-sc="for" list="{{deps}}" as="d" hint-placeholder-count="1">
+<div style="position:relative;overflow:hidden;border-top:1px solid #E4DCCD;margin:0 -18px;padding:0">
+<div style="position:absolute;right:0;top:0;bottom:0;display:flex;width:132px;visibility:{{d.vis}}"><button onClick="{{d.edit}}" style="flex:1;background:#565449;color:#FFFBF4;font-weight:500">編輯</button><button onClick="{{d.del}}" style="flex:1;background:#11120D;color:#FFFBF4;font-weight:500">刪除</button></div>
+<div class="row" style="position:relative;background:#FFFBF4;touch-action:pan-y;min-height:60px;padding:0 8px 0 18px;transition:transform .2s;transform:{{d.tx}}" onPointerDown="{{d.down}}" onPointerUp="{{d.up}}"><span style="flex:1;min-width:0"><div style="font-weight:700">{{d.name}}　<span class="sub" style="font-weight:400">{{d.dateTxt}}</span></div><div class="sub">{{d.amtTxt}}</div></span><button onClick="{{d.toggle}}" aria-label="顯示編輯與刪除" style="width:44px;height:44px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h.01M12 12h.01M19 12h.01"></path></svg></button></div>
+</div>
+</template></div>
+</template>
+</template>
+
+
+<template data-sc="if" value="{{isSettle}}" hint-placeholder-val="{{false}}">
+<h1 style="margin:0;font-size:24px">結算分帳</h1>
+<div class="row" style="zoom:.72;background:#E8E1D2;border-radius:999px;padding:5px;gap:0"><template data-sc="for" list="{{sTabs}}" as="t" hint-placeholder-count="2"><button class="seg {{t.on}}" onClick="{{t.go}}">{{t.t}}</button></template></div>
+<template data-sc="if" value="{{sSplit}}" hint-placeholder-val="{{true}}">
+<div class="card"><div style="font-weight:700">公費錢包餘額退款</div>
+<div class="sub" style="margin:4px 0 8px">（入金 NT$ {{depTotal}} − 公費支出 NT$ {{walletSpent}}）÷ {{memberCount}} 人</div>
+<template data-sc="if" value="{{noMembers}}" hint-placeholder-val="{{false}}"><div class="sub">請先到公費錢包新增成員</div></template>
+<template data-sc="for" list="{{refunds}}" as="r" hint-placeholder-count="2"><div class="row" style="justify-content:space-between;min-height:40px;border-top:1px solid #E4DCCD"><span>{{r.name}}</span><span style="text-align:right"><div style="color:#565449;font-weight:700">{{r.txt}}</div><div class="sub">≈ NT$ {{r.twd}}</div></span></div></template></div>
+<div class="card"><div style="font-weight:700;margin-bottom:6px">誰該給誰</div>
+<template data-sc="if" value="{{noLines}}" hint-placeholder-val="{{false}}"><div class="sub">目前沒有需要結算的款項</div></template>
+<template data-sc="for" list="{{lines}}" as="l" hint-placeholder-count="2"><div class="row" style="padding:10px 0;border-top:1px solid #E4DCCD;justify-content:space-between"><span><b>{{l.from}}</b> 應給 <b>{{l.to}}</b></span><span style="text-align:right"><div style="color:#565449;font-weight:700">₩ {{l.krw}}</div><div class="sub">≈ NT$ {{l.amt}}</div></span></div></template></div>
+<button class="btn" onClick="{{copy}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 9h11v11H9zM5 15V4h11"></path></svg>複製建議</button>
+</template>
+<template data-sc="if" value="{{sPer}}" hint-placeholder-val="{{false}}">
+<div class="card"><div style="font-weight:700">個人花費</div>
+<template data-sc="if" value="{{noMembers}}" hint-placeholder-val="{{false}}"><div class="sub" style="margin-top:6px">請先到公費錢包新增成員</div></template>
+<template data-sc="for" list="{{pers}}" as="r" hint-placeholder-count="3"><div>
+<template data-sc="if" value="{{r.isHead}}" hint-placeholder-val="{{true}}"><div class="row" style="justify-content:space-between;margin-top:16px;padding-top:10px;border-top:1px solid #E4DCCD"><b>{{r.name}}</b><span style="text-align:right"><div style="color:#565449;font-weight:700">{{r.krw}}</div><div class="sub">{{r.twd}}</div></span></div></template>
+<template data-sc="if" value="{{r.isItem}}" hint-placeholder-val="{{false}}"><div class="row" style="justify-content:space-between;padding-top:8px"><span><div>{{r.title}}</div><div class="sub">{{r.sub}}</div></span><span style="text-align:right"><div>{{r.krw}}</div><div class="sub">{{r.twd}}</div></span></div></template>
+</div></template></div>
+</template>
+</template>
+
+</div>
+
+<template data-sc="if" value="{{isHome}}" hint-placeholder-val="{{true}}"><button class="btn" onClick="{{openNew}}" aria-label="新增記帳" style="position:fixed;right:max(16px,calc(50vw - 224px));bottom:92px;width:60px;height:60px;border-radius:50%;padding:0;box-shadow:0 8px 20px rgba(17,18,13,.3);z-index:5"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true" style="width:28px;height:28px"><path d="M12 5v14M5 12h14"></path></svg></button></template>
+
+<div class="nav"><template data-sc="for" list="{{tabs}}" as="t" hint-placeholder-count="3"><button class="{{t.on}}" onClick="{{t.go}}"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="{{t.d}}"></path></svg>{{t.label}}</button></template></div>
+
+<template data-sc="if" value="{{modal}}" hint-placeholder-val="{{false}}">
+<div style="position:fixed;inset:0;background:rgba(17,18,13,.5);z-index:10;display:flex;align-items:flex-end;justify-content:center">
+<div style="width:100%;max-width:480px;max-height:92vh;overflow-x:hidden;overflow-y:auto;touch-action:pan-y;overscroll-behavior-x:none;background:#F1ECE0;border-radius:28px 28px 0 0;padding:18px 16px 28px">
+<div class="row" style="justify-content:space-between"><b style="font-size:18px">{{formTitle}}</b><button onClick="{{closeM}}" aria-label="關閉" style="width:44px;height:44px"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"></path></svg></button></div>
+<div class="row" style="margin-top:8px"><button class="pill {{outOn}}" style="flex:1" onClick="{{setOut}}">支出</button><button class="pill {{inOn}}" style="flex:1" onClick="{{setIn}}">收入</button></div>
+<div class="lab">名稱</div><input aria-label="名稱" placeholder="例如：烤肉晚餐" value="{{f.name}}" onChange="{{setName}}">
+<div class="card" style="margin-top:12px;padding:12px"><div style="text-align:right;font-size:32px;font-weight:700;min-height:44px;word-break:break-all">{{f.cur}} {{f.expr}}</div>
+<div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px;margin-top:8px"><template data-sc="for" list="{{keys}}" as="k" hint-placeholder-count="4"><button class="{{k.cls}}" onClick="{{k.go}}" aria-label="{{k.label}}">{{k.t}}</button></template></div></div>
+<div class="dtrow"><div style="min-width:0"><div class="lab">日期</div><input type="date" aria-label="日期" value="{{f.date}}" onChange="{{setDate}}"></div><div style="min-width:0"><div class="lab">時間（可不填）</div><input type="time" aria-label="時間" value="{{f.time}}" onChange="{{setTime}}"></div></div>
+<div class="lab">幣別</div><div class="row" style="flex-wrap:wrap"><template data-sc="for" list="{{curs}}" as="c" hint-placeholder-count="4"><button class="pill {{c.on}}" style="min-height:35px;padding:0 13px;font-size:13px" onClick="{{c.go}}">{{c.t}}</button></template></div>
+<div class="lab">類別</div><div class="row" style="flex-wrap:wrap"><template data-sc="for" list="{{cats}}" as="c" hint-placeholder-count="7"><button class="pill {{c.on}}" style="min-height:35px;padding:0 13px;font-size:13px" onClick="{{c.go}}"><svg class="ico" style="width:18px;height:18px" viewBox="0 0 24 24" aria-hidden="true"><path d="{{c.d}}"></path></svg>{{c.id}}</button></template></div>
+<div style="background:#FFFBF4;border:1px solid #E4DCCD;border-radius:20px;padding:0 16px 16px;margin-top:14px">
+<div style="padding-bottom:16px"><div class="lab">付款人</div><select aria-label="付款人" value="{{f.payer}}" onChange="{{setPayer}}"><template data-sc="for" list="{{payers}}" as="p" hint-placeholder-count="3"><option value="{{p.id}}">{{p.name}}</option></template></select></div>
+<div style="border-top:1px solid #E4DCCD;padding-bottom:16px"><div class="lab">支付方式</div><div class="row" style="flex-wrap:wrap"><template data-sc="for" list="{{pays}}" as="w" hint-placeholder-count="3"><button class="pill {{w.on}}" style="min-height:35px;padding:0 13px;font-size:13px" onClick="{{w.go}}">{{w.t}}</button></template></div></div>
+<div style="border-top:1px solid #E4DCCD"><div class="row" style="justify-content:space-between;margin-top:14px"><div class="lab" style="margin:0">均分成員</div><div class="row" style="gap:6px"><button class="pill" style="min-height:44px;padding:0 12px;background:none;font-size:13px" onClick="{{selAll}}">全選</button><button class="pill" style="min-height:44px;padding:0 12px;background:none;font-size:13px" onClick="{{selNone}}">全不選</button></div></div>
+<div class="row" style="flex-wrap:wrap"><template data-sc="for" list="{{splitM}}" as="m" hint-placeholder-count="3"><button class="pill {{m.on}}" onClick="{{m.go}}">{{m.name}}</button></template></div></div>
+</div>
+<div class="lab">備註</div><textarea aria-label="備註" placeholder="選填" rows="3" value="{{f.note}}" onChange="{{setNote}}"></textarea>
+<button class="btn" style="width:100%;margin-top:18px" onClick="{{save}}">儲存</button>
+</div></div>
+</template>
+
+<template data-sc="if" value="{{toast}}" hint-placeholder-val="{{false}}"><div style="position:fixed;left:50%;transform:translateX(-50%);bottom:100px;background:#11120D;color:#FFFBF4;padding:12px 20px;border-radius:999px;z-index:20;font-size:14px">{{toast}}</div></template>
+
+</script>
+<script>
+(function(){
+var get=function(sc,p){var v=sc;var ks=p.split('.');for(var i=0;i<ks.length;i++){if(v==null)return undefined;v=v[ks[i]]}return v};
+var hole=/\{\{\s*([\w$.]+)\s*\}\}/g,one=/^\s*\{\{\s*([\w$.]+)\s*\}\}\s*$/;
+var interp=function(s,sc){return s.replace(hole,function(m,p){var v=get(sc,p);return(v==null||v===false)?'':String(v)})};
+var EVT=['click','input','change','pointerdown','pointerup'];
+function build(node,sc,out){
+  if(node.nodeType===3){out.push(document.createTextNode(interp(node.nodeValue,sc)));return}
+  if(node.nodeType!==1)return;
+  if(node.nodeName==='TEMPLATE'){
+    var kind=node.getAttribute('data-sc'),kids=Array.from(node.content.childNodes);
+    if(kind==='if'){var m=one.exec(node.getAttribute('value')||'');if(m&&get(sc,m[1]))kids.forEach(function(k){build(k,sc,out)});return}
+    if(kind==='for'){var m2=one.exec(node.getAttribute('list')||''),as=node.getAttribute('as');var arr=(m2&&get(sc,m2[1]))||[];arr.forEach(function(item){var s2=Object.create(sc);s2[as]=item;kids.forEach(function(k){build(k,s2,out)})});return}
+  }
+  var el=document.createElementNS(node.namespaceURI,node.localName);
+  el._h={};
+  Array.from(node.attributes).forEach(function(a){
+    var n=a.name,v=a.value;
+    if(n.indexOf('on')===0){var mm=one.exec(v);var f=mm&&get(sc,mm[1]);var t=n.slice(2);el._h[(t==='input'||t==='change')?'change':t]=f;return}
+    if(n==='value'&&/^(INPUT|SELECT|TEXTAREA)$/.test(node.nodeName)){el._val=interp(v,sc);return}
+    el.setAttribute(n,interp(v,sc));
+  });
+  EVT.forEach(function(t){el.addEventListener(t,function(e){var h=el._h[t==='input'?'change':t];if(h)h(e)})});
+  var cs=[];Array.from(node.childNodes).forEach(function(c){build(c,sc,cs)});
+  cs.forEach(function(c){el.appendChild(c)});
+  if(el._val!==undefined)el.value=el._val;
+  out.push(el);
+}
+function sync(live,fresh){
+  Array.from(live.attributes).forEach(function(a){if(!fresh.hasAttribute(a.name))live.removeAttribute(a.name)});
+  Array.from(fresh.attributes).forEach(function(a){if(live.getAttribute(a.name)!==a.value)live.setAttribute(a.name,a.value)});
+  live._h=fresh._h;
+  patchKids(live,fresh);
+  if(fresh._val!==undefined&&live.value!==fresh._val)live.value=fresh._val;
+}
+function patchKids(live,fresh){
+  var fk=Array.from(fresh.childNodes);
+  fk.forEach(function(f,i){
+    var l=live.childNodes[i];
+    if(!l){live.appendChild(f);return}
+    if(l.nodeType!==f.nodeType||l.nodeName!==f.nodeName){live.replaceChild(f,l);return}
+    if(f.nodeType===3){if(l.nodeValue!==f.nodeValue)l.nodeValue=f.nodeValue}else sync(l,f);
+  });
+  while(live.childNodes.length>fk.length)live.removeChild(live.lastChild);
+}
+window.DCLogic=function(props){this.props=props||{};this.state={}};
+window.DCLogic.prototype.setState=function(p,cb){
+  var v=typeof p==='function'?p(this.state):p;
+  this.state=Object.assign({},this.state,v);
+  if(window.__schedule)window.__schedule();
+  if(cb)cb();
+};
+window.__mountApp=function(Cls,root,tplHtml){
+  var t=document.createElement('template');t.innerHTML=tplHtml;
+  var nodes=Array.from(t.content.childNodes);
+  var inst=new Cls({}),pending=false;
+  function render(){
+    pending=false;
+    try{
+      var vals=inst.renderVals(),out=[];
+      nodes.forEach(function(n){build(n,vals,out)});
+      var fresh=document.createElement('div');out.forEach(function(n){fresh.appendChild(n)});
+      patchKids(root,fresh);
+    }catch(err){root.innerHTML='';var pre=document.createElement('pre');pre.style.cssText='padding:16px;white-space:pre-wrap;color:#9A2B2B';pre.textContent='發生錯誤：'+err.message;root.appendChild(pre);console.error(err)}
+  }
+  window.__schedule=function(){if(!pending){pending=true;Promise.resolve().then(render)}};
+  render();
+  if(inst.componentDidMount)inst.componentDidMount();
+};
+})();
+</script>
+<script>
+const CATS=[['交通','M8 6v6M16 6v6M2 12h20M4 6h16a2 2 0 0 1 2 2v8H2V8a2 2 0 0 1 2-2zM6 18v2M18 18v2'],['景點','M3 20l6-10 4 6 3-4 5 8z'],['餐飲','M7 3v8M4 3v5a3 3 0 0 0 6 0V3M7 11v10M17 3c-2 2-2 6 0 8v10'],['住宿','M3 18v-8M3 14h18v4M21 14v-3a3 3 0 0 0-3-3h-7v6'],['購物','M6 7h12l1 13H5zM9 7a3 3 0 0 1 6 0'],['門票','M3 9a2 2 0 0 0 0 6v3h18v-3a2 2 0 0 1 0-6V6H3zM13 6v12'],['其他','M5 12h.01M12 12h.01M19 12h.01']].map(a=>({id:a[0],d:a[1]}));
+const CURS=[['KRW','韓幣 (KRW)'],['JPY','日幣 (JPY)'],['USD','美金 (USD)'],['TWD','台幣 (TWD)']];
+const RATE={JPY:0.21,USD:32,TWD:1};
+const KEYS=['C','⌫','÷','×','7','8','9','−','4','5','6','+','1','2','3','=','0','00','.'];
+const n0=v=>Math.round(v).toLocaleString('en-US');
+const n2=v=>v.toLocaleString('en-US',{maximumFractionDigits:2});
+const today=()=>{const d=new Date();const p=x=>String(x).padStart(2,'0');return {date:d.getFullYear()+'-'+p(d.getMonth()+1)+'-'+p(d.getDate()),time:p(d.getHours())+':'+p(d.getMinutes())}};
+class Component extends DCLogic {
+constructor(p){super(p);this.state={tab:'home',modal:false,members:[],deposits:[],expenses:[],rate:0.025,budget:1000000,f:{},newMember:'',dM:'',dA:'',dCur:'TWD',dWay:'WOWPASS',dDate:'',dOpen:false,dEdit:'',mEdit:'',swipe:'',wTab:'ov',wCur:'KRW',sTab:'split',dateF:'',editBR:false,toast:''}}
+componentDidMount(){try{const d=JSON.parse(localStorage.getItem('tripbook.v1')||'null');if(d)this.setState(d)}catch(e){}}
+up(p){this.setState(p);try{const s=Object.assign({},this.state,p);localStorage.setItem('tripbook.v1',JSON.stringify({members:s.members,deposits:s.deposits,expenses:s.expenses,rate:s.rate,budget:s.budget}))}catch(e){}}
+say(m){this.setState({toast:m});setTimeout(()=>this.setState({toast:''}),1800)}
+fs(k,v){this.setState({f:Object.assign({},this.state.f,{[k]:v})})}
+ev(x){const t=x.replace(/×/g,'*').replace(/÷/g,'/').replace(/−/g,'-').replace(/[+\-*\/.]+$/,'');if(!/^[0-9+\-*\/. ]+$/.test(t))return NaN;try{const v=Function('return ('+t+')')();return isFinite(v)?Math.round(v*100)/100:NaN}catch(e){return NaN}}
+press(k){const x=this.state.f.expr;let r;if(k==='C')r='0';else if(k==='⌫')r=x.length>1?x.slice(0,-1):'0';else if(k==='='){const v=this.ev(x);r=isNaN(v)?x:String(v)}else if('÷×−+'.includes(k))r=/[÷×−+]$/.test(x)?x.slice(0,-1)+k:x+k;else r=x==='0'&&k!=='.'?k:x+k;this.fs('expr',r)}
+openNew(){const t=today();this.setState({modal:true,f:{id:'',date:t.date,time:t.time,name:'',cur:'KRW',type:'out',pay:'',cat:'餐飲',payer:'wallet',split:this.state.members.map(m=>m.id),note:'',expr:'0'}})}
+save(){const f=this.state.f,amt=this.ev(f.expr);if(!(amt>0))return this.say('請輸入有效金額');const e={id:f.id||'e'+Date.now(),date:f.date,time:f.time,name:(f.name||'').trim()||f.cat,cur:f.cur,type:f.type,cat:f.cat,payer:f.payer,split:f.split,note:f.note,pay:f.pay||'',amt};this.up({expenses:f.id?this.state.expenses.map(x=>x.id===f.id?e:x):[e].concat(this.state.expenses),modal:false})}
+copyText(t){const ok=()=>this.say('已複製到剪貼簿');const fb=()=>{try{const a=document.createElement('textarea');a.value=t;document.body.appendChild(a);a.select();document.execCommand('copy');document.body.removeChild(a);ok()}catch(e){this.say('複製失敗，請手動複製')}};try{navigator.clipboard.writeText(t).then(ok).catch(fb)}catch(e){fb()}}
+renderVals(){
+const s=this.state,f=s.f,krw=Number(s.rate)||0;
+const tw=(a,c)=>c==='KRW'?a*krw:a*RATE[c];
+const nm=id=>id==='wallet'?'公費錢包':(s.members.find(m=>m.id===id)||{name:''}).name;
+const dOf=c=>(CATS.find(x=>x.id===c)||CATS[6]).d;
+let tt=0;s.expenses.forEach(e=>tt+=(e.type==='in'?-1:1)*tw(e.amt,e.cur));
+const tk=krw?tt/krw:0,pct=s.budget>0?Math.round(tk/s.budget*100):0;
+const mem=s.members,n=mem.length,ids=mem.map(m=>m.id);
+const dTw=d=>tw(d.amt,d.cur||'TWD');
+const depT=s.deposits.reduce((a,d)=>a+dTw(d),0);
+let wSp=0;const paid={},share={};ids.forEach(i=>{paid[i]=0;share[i]=0});
+s.expenses.forEach(e=>{const t=tw(e.amt,e.cur)*(e.type==='in'?-1:1);if(e.payer==='wallet')wSp+=t;else if(e.payer in paid)paid[e.payer]+=t;let sp=(e.split||[]).filter(i=>i in share);if(!sp.length)sp=e.payer in share?[e.payer]:(e.payer==='wallet'?ids:[]);sp.forEach(i=>share[i]+=t/sp.length)});
+const left=depT-wSp,each=n?left/n:0;
+const bal={};ids.forEach(i=>{bal[i]=paid[i]+s.deposits.filter(d=>d.m===i).reduce((a,d)=>a+dTw(d),0)-each-share[i]});
+const cr=[],db=[];Object.keys(bal).forEach(id=>{if(bal[id]>0.5)cr.push({id,v:bal[id]});else if(bal[id]<-0.5)db.push({id,v:-bal[id]})});
+const lines=[];let i=0,j=0;while(i<db.length&&j<cr.length){const a=Math.min(db[i].v,cr[j].v);lines.push({from:nm(db[i].id),to:nm(cr[j].id),amt:n0(a),krw:n0(krw?a/krw:0)});db[i].v-=a;cr[j].v-=a;if(db[i].v<0.5)i++;if(cr[j].v<0.5)j++}
+const dls=Array.from(new Set(s.expenses.map(e=>e.date))).sort(),dF=dls.includes(s.dateF)?s.dateF:'';
+const exps=s.expenses.filter(e=>!dF||e.date===dF).sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||''))).map((e,ix,ar)=>({head:ix===0||ar[ix-1].date!==e.date,headTxt:e.date.slice(5).replace('-','/')+'（'+'日一二三四五六'[new Date(e.date+'T00:00:00').getDay()]+'）',name:e.name,d:dOf(e.cat),sub:e.cat+(nm(e.payer)?' ・ '+nm(e.payer):''),dateTxt:e.date.slice(5).replace('-','/')+(e.time?' '+e.time:''),note:e.note||'',hasNote:!!(e.note&&e.note.trim()),tx:s.swipe===e.id?'translateX(-132px)':'translateX(0)',vis:s.swipe===e.id?'visible':'hidden',down:ev=>{this.sx=ev.clientX},up:ev=>{const dx=ev.clientX-(this.sx==null?ev.clientX:this.sx);if(dx<-40)this.setState({swipe:e.id});else if(dx>40)this.setState({swipe:''})},toggle:()=>this.setState({swipe:s.swipe===e.id?'':e.id}),color:e.type==='in'?'#4E8EA2':'#11120D',amtTxt:(e.type==='in'?'+':'')+e.cur+' '+n2(e.amt),edit:()=>this.setState({modal:true,swipe:'',f:Object.assign({},e,{expr:String(e.amt)})}),del:()=>this.up({expenses:s.expenses.filter(x=>x.id!==e.id),swipe:''})}));
+const pr=[];mem.forEach(m=>{const its=[];let tot=0;s.expenses.slice().sort((a,b)=>(a.date+(a.time||'')).localeCompare(b.date+(b.time||''))).forEach(e=>{if(e.payer==='wallet')return;let sp=(e.split||[]).filter(i=>ids.includes(i));if(!sp.length)sp=ids.includes(e.payer)?[e.payer]:(e.payer==='wallet'?ids:[]);if(!sp.includes(m.id))return;const t=tw(e.amt,e.cur)*(e.type==='in'?-1:1)/sp.length;tot+=t;its.push({isHead:false,isItem:true,title:e.name,sub:e.date.slice(5).replace('-','/')+' ・ '+e.cat,krw:(t<0?'−':'')+'₩ '+n0(krw?Math.abs(t)/krw:0),twd:'≈ NT$ '+n0(Math.abs(t))})});pr.push({isHead:true,isItem:false,name:m.name,krw:(tot<0?'−':'')+'₩ '+n0(krw?Math.abs(tot)/krw:0),twd:'≈ NT$ '+n0(Math.abs(tot))});its.forEach(x=>pr.push(x))});
+const fm=v=>(v<0?'−':'')+(s.wCur==='KRW'?'₩'+n0(krw?Math.abs(v)/krw:0):'NT$ '+n0(Math.abs(v)));
+const dlab=d=>d?(+d.slice(5,7))+'月'+(+d.slice(8,10))+'日':'';
+const AV=['#11120D','#565449','#3A3930','#6E6C5C','#2A2A22'];
+const rec=[];
+s.deposits.forEach(d=>{const mi=ids.indexOf(d.m);rec.push({k:d.date||'',isDep:true,isExp:false,title:'入金',sub:nm(d.m)+(d.date?' ・ '+dlab(d.date):''),ch:(nm(d.m)||'?').slice(0,1),bg:AV[(mi<0?0:mi)%AV.length],fg:'#FFFBF4',d:'',color:'#4E8EA2',amt:'+'+fm(dTw(d))})});
+s.expenses.filter(e=>e.payer==='wallet').forEach(e=>{const t=tw(e.amt,e.cur)*(e.type==='in'?-1:1);rec.push({k:e.date+' '+(e.time||''),isDep:false,isExp:true,title:e.name,sub:e.cat+' ・ '+dlab(e.date),ch:'',bg:'#E8E1D2',fg:'#565449',d:dOf(e.cat),color:t<0?'#4E8EA2':'#11120D',amt:(t<0?'+':'−')+fm(Math.abs(t))})});
+rec.sort((a,b)=>b.k.localeCompare(a.k));
+const go=t=>()=>this.setState({tab:t});
+return {
+pers:pr,wOv:s.wTab==='ov',wMem:s.wTab==='mem',wRec:s.wTab==='rec',
+sSplit:s.sTab==='split',sPer:s.sTab==='per',sTabs:[['split','分帳'],['per','個人花費']].map(t=>({t:t[1],on:s.sTab===t[0]?'on':'',go:()=>this.setState({sTab:t[0]})})),
+wTabs:[['ov','總覽'],['mem','成員'],['rec','入金']].map(t=>({t:t[1],on:s.wTab===t[0]?'on':'',go:()=>this.setState({wTab:t[0]})})),
+wCurs:['KRW','TWD'].map(c=>({t:c,on:s.wCur===c?'on':'',go:()=>this.setState({wCur:c})})),
+wsBal:fm(depT-wSp),wsDep:fm(depT),wsSp:fm(wSp),wRecent:rec.slice(0,3),noRecent:!rec.length,
+goDeposit:()=>this.setState({wTab:'rec',dOpen:true,dEdit:'',dA:'',dWay:'WOWPASS',dDate:today().date}),goMem:()=>this.setState({wTab:'mem'}),goRec:()=>this.setState({wTab:'rec'}),
+isHome:s.tab==='home',isWallet:s.tab==='wallet',isSettle:s.tab==='settle',modal:s.modal,toast:s.toast,
+tabs:[['home','首頁','M3 11l9-8 9 8v10H3z'],['wallet','公費錢包','M3 7h16a2 2 0 0 1 2 2v10H5a2 2 0 0 1-2-2zM3 7l12-3v3M17 14h.01'],['settle','結算','M12 3v18M5 8l7-3 7 3M3 15l3-6 3 6a3 3 0 0 1-6 0zM15 15l3-6 3 6a3 3 0 0 1-6 0z']].map(t=>({d:t[2],label:t[1],on:s.tab===t[0]?'on':'',go:go(t[0])})),
+rate:s.rateIn!=null?s.rateIn:String(krw?Math.round(1/krw*100)/100:''),rate100:n2(krw?1/krw:0),budget:s.budget,budgetTxt:n0(s.budget||0),totalKrw:n0(tk),totalTwd:n0(tt),pct,barW:Math.min(100,Math.max(0,pct))+'%',
+setRate:e=>{const t=e.target.value,v=parseFloat(t);this.setState({rateIn:t});if(v>0)this.up({rate:1/v})},setBudget:e=>this.up({budget:parseFloat(e.target.value)||0}),
+exps,noExp:!s.expenses.length,editBR:s.editBR,toggleBR:()=>this.setState({editBR:!s.editBR,rateIn:null}),
+dates:[{t:'全部',on:dF?'':'on',go:()=>this.setState({dateF:''})}].concat(dls.map(d=>({t:d.slice(5).replace('-','/'),on:dF===d?'on':'',go:()=>this.setState({dateF:d})}))),
+members:s.members.map(m=>{const open=s.swipe===m.id;return {id:m.id,name:m.name,dep:n0(s.deposits.filter(d=>d.m===m.id).reduce((a,d)=>a+dTw(d),0)),tx:open?'translateX(-132px)':'translateX(0)',vis:open?'visible':'hidden',down:e=>{this.sx=e.clientX},up:e=>{const dx=e.clientX-(this.sx==null?e.clientX:this.sx);if(dx<-40)this.setState({swipe:m.id});else if(dx>40)this.setState({swipe:''})},toggle:()=>this.setState({swipe:open?'':m.id}),edit:()=>{this.setState({newMember:m.name,mEdit:m.id,swipe:''});this.say('請在下方修改名稱後按「儲存」')},del:()=>this.up({members:s.members.filter(x=>x.id!==m.id),deposits:s.deposits.filter(d=>d.m!==m.id),expenses:s.expenses.map(e=>Object.assign({},e,{split:(e.split||[]).filter(x=>x!==m.id)})),dM:s.dM===m.id?'':s.dM,swipe:''})}}),
+newMember:s.newMember,setNewMember:e=>this.setState({newMember:e.target.value}),
+addMember:()=>{const nn=s.newMember.trim();if(!nn)return;if(s.mEdit)return this.up({members:s.members.map(x=>x.id===s.mEdit?Object.assign({},x,{name:nn}):x),newMember:'',mEdit:''});const id='m'+Date.now();this.up({members:s.members.concat([{id,name:nn}]),newMember:'',dM:s.dM||id})},mBtn:s.mEdit?'儲存':'新增',mEditing:!!s.mEdit,cancelMember:()=>this.setState({mEdit:'',newMember:''}),
+dM:s.dM,setDM:e=>this.setState({dM:e.target.value}),dA:s.dA,setDA:e=>this.setState({dA:e.target.value}),
+dCur:s.dCur,dWays:['WOWPASS','現金'].map(w=>({t:w,on:s.dWay===w?'on':'',go:()=>this.setState({dWay:s.dWay===w?'':w})})),dCurs:CURS.filter(c=>c[0]==='KRW'||c[0]==='TWD').map(c=>({t:c[1],on:s.dCur===c[0]?'on':'',go:()=>this.setState({dCur:c[0]})})),
+depTitle:s.dEdit?'編輯入金':'入金',depBtn:s.dEdit?'儲存':'入金',dEditing:!!s.dEdit,cancelDep:()=>this.setState({dEdit:'',dA:'',dWay:'WOWPASS',dDate:'',dOpen:false}),depOpen:s.dOpen,dDate:s.dDate,setDDate:e=>this.setState({dDate:e.target.value}),depIcon:s.dOpen?'M6 6l12 12M18 6L6 18':'M12 5v14M5 12h14',depToggleLabel:s.dOpen?'收合入金表單':'新增入金',toggleDep:()=>s.dOpen?this.setState({dOpen:false,dEdit:'',dA:'',dWay:'WOWPASS',dDate:''}):this.setState({dOpen:true,dEdit:'',dA:'',dWay:'WOWPASS',dDate:today().date}),
+addDep:()=>{const a=parseFloat(s.dA),m=s.dM||(mem[0]&&mem[0].id);if(!(a>0)||!m)return this.say('請選擇成員並輸入金額');const rec={id:s.dEdit||'d'+Date.now(),m,amt:a,cur:s.dCur,way:s.dWay,date:s.dDate||today().date};this.up({deposits:s.dEdit?s.deposits.map(x=>x.id===s.dEdit?rec:x):s.deposits.concat([rec]),dA:'',dEdit:'',dWay:'WOWPASS',dDate:'',dOpen:false})},
+noDeps:!s.deposits.length,
+deps:s.deposits.map(d=>{const c=d.cur||'TWD',open=s.swipe===d.id;return {name:nm(d.m),dateTxt:d.date?d.date.slice(5).replace('-','/'):'',amtTxt:c+' '+n2(d.amt)+(c==='TWD'?'':' ≈ NT$ '+n0(dTw(d)))+(d.way?' ・ '+d.way:''),tx:open?'translateX(-132px)':'translateX(0)',vis:open?'visible':'hidden',down:e=>{this.sx=e.clientX},up:e=>{const dx=e.clientX-(this.sx==null?e.clientX:this.sx);if(dx<-40)this.setState({swipe:d.id});else if(dx>40)this.setState({swipe:''})},toggle:()=>this.setState({swipe:open?'':d.id}),edit:()=>{this.setState({dM:d.m,dA:String(d.amt),dCur:c,dWay:d.way||'',dDate:d.date||'',dOpen:true,dEdit:d.id,swipe:''});this.say('請在上方修改後按「儲存」')},del:()=>this.up({deposits:s.deposits.filter(x=>x.id!==d.id),swipe:''})}}),
+memberCount:n,noMembers:!n,refunds:mem.map(m=>({name:m.name,txt:(left>=0?'可退 ₩ ':'需補 ₩ ')+n0(krw?Math.abs(each)/krw:0),twd:n0(Math.abs(each))})),
+depTotal:n0(depT),walletSpent:n0(wSp),walletLeft:n0(depT-wSp),walletLeftKrw:n0(krw?(depT-wSp)/krw:0),
+wpay:['WOWPASS','現金'].map(w=>{const dp=s.deposits.filter(d=>d.way===w).reduce((a,d)=>a+dTw(d),0),sp=s.expenses.filter(e=>e.payer==='wallet'&&e.pay===w).reduce((a,e)=>a+tw(e.amt,e.cur)*(e.type==='in'?-1:1),0),k=v=>s.wCur==='KRW'?'₩ '+n0(krw?v/krw:0):'NT$ '+n0(v),k2=v=>s.wCur==='KRW'?'≈ TWD '+n0(v):'≈ ₩ '+n0(krw?v/krw:0),pc=dp>0?Math.round(sp/dp*100):0;return {name:w,big:k(dp-sp),small:k2(dp-sp),dep:k(dp),sp:k(sp),pct:pc+'%',barW:Math.min(100,Math.max(0,pc))+'%'}}),
+lines,noLines:!lines.length,
+bals:Object.keys(bal).map(id=>({name:nm(id),color:bal[id]>0.5?'#565449':bal[id]<-0.5?'#565449':'#565449',txt:bal[id]>0.5?'可收 NT$ '+n0(bal[id]):bal[id]<-0.5?'應付 NT$ '+n0(-bal[id]):'已結清'})),
+copy:()=>{const r=n?'【公費錢包餘額退款】\n'+mem.map(m=>m.name+(left>=0?' 可退 ₩ ':' 需補 ₩ ')+n0(krw?Math.abs(each)/krw:0)+'（≈ NT$ '+n0(Math.abs(each))+'）').join('\n')+'\n\n':'';const w=lines.length?lines.map(l=>l.from+' 應給 '+l.to+' ₩ '+l.krw+'（≈ NT$ '+l.amt+'）').join('\n'):'目前沒有需要結算的款項';this.copyText(r+'【誰該給誰】\n'+w)},
+openNew:()=>this.openNew(),closeM:()=>this.setState({modal:false}),
+f,formTitle:f.id?'編輯記帳小卡':'新增記帳小卡',outOn:f.type==='out'?'on':'',inOn:f.type==='in'?'on':'',
+setOut:()=>this.fs('type','out'),setIn:()=>this.fs('type','in'),
+keys:KEYS.map(k=>({t:k,label:k,cls:'key '+(k==='='?'eq':'÷×−+'.includes(k)||k==='C'||k==='⌫'?'op':''),go:()=>this.press(k)})),
+setName:e=>this.fs('name',e.target.value),setNote:e=>this.fs('note',e.target.value),setDate:e=>this.fs('date',e.target.value),setTime:e=>this.fs('time',e.target.value),setPayer:e=>this.fs('payer',e.target.value),pays:['WOWPASS','現金','信用卡'].map(w=>({t:w,on:f.pay===w?'on':'',go:()=>this.fs('pay',f.pay===w?'':w)})),
+curs:CURS.map(c=>({t:c[1],on:f.cur===c[0]?'on':'',go:()=>this.fs('cur',c[0])})),
+cats:CATS.map(c=>({id:c.id,d:c.d,on:f.cat===c.id?'on':'',go:()=>this.fs('cat',c.id)})),
+payers:[{id:'wallet',name:'公費錢包'}].concat(s.members),
+splitM:s.members.map(m=>{const on=(f.split||[]).includes(m.id);return {name:m.name,on:on?'on':'',go:()=>this.fs('split',on?f.split.filter(x=>x!==m.id):(f.split||[]).concat([m.id]))}}),
+selAll:()=>this.fs('split',s.members.map(m=>m.id)),selNone:()=>this.fs('split',[]),
+save:()=>this.save()
+}}
+}
+window.addEventListener('DOMContentLoaded',function(){window.__mountApp(Component,document.getElementById('app'),document.getElementById('tpl').textContent)});
+</script>
+</body>
+</html>
